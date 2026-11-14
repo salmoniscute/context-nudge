@@ -8,7 +8,7 @@ The longer a session gets, the more every turn costs, because Claude re-reads th
 
 ![context-nudge in Claude Code: a reminder after a commit, and the status line below the prompt](docs/preview/preview.en.png)
 
-Works with Pro and Max plans and with pay-as-you-go API keys. Reminders in English, 繁體中文, 简体中文, 日本語, and 한국어.
+Works with Pro and Max plans and with pay-as-you-go API keys. Reminders in English, 繁體中文, 简体中文, 日本語, and 한국어. Everything runs on your machine; nothing is sent anywhere.
 
 ## Before you install
 
@@ -77,7 +77,7 @@ Opus 5.5 │ ▰▰▰▰▰▰▰▱▱▱ 140k/200k │ ❄ cache cold
 
 - `▰▰▰▰▰▰▰▱▱▱ 140k/200k` is the current context size, filling toward the `remind_always` threshold: green below 100k, yellow from 100k, red from 200k.
 - `⏱ cache 52m` is how long until the prompt cache expires.
-- With `unit: usd`, the session cost is added at the end. `≥$3.42` means some responses used a model not in the price table, so the real cost is higher.
+- With `unit: usd`, the session cost is added at the end (see [Privacy and accuracy](#privacy-and-accuracy) for what `≥` means).
 - `❄ cache cold (model switched)` appears right after `/model`, because the new model has no cache of this conversation yet.
 - `❄ cache cold` appears once the prompt cache has expired. It's the only warning you can see *before* you send a message, which is when it's still useful.
 
@@ -160,7 +160,7 @@ With the default thresholds, following every reminder would have cut usage by **
 
 That's one person's history. Run `/context-nudge:report` to see yours.
 
-## Good to know
+## Privacy and accuracy
 
 - **Everything runs on your machine.** The plugin reads the transcripts Claude Code already saves locally. Nothing is sent anywhere.
 - **How Pro/Max limits count tokens isn't published**, so the plugin doesn't show "% of your limit". It shows tokens. Cached reads are much cheaper than other tokens on the API and probably count for less against limits too, so a big "processed" number overstates the impact somewhat. Re-writes after the cache expires are the expensive part.
