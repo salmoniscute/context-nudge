@@ -1,0 +1,52 @@
+{
+  "name": "context-nudge",
+  "version": "0.1.0",
+  "description": "Nudges you to /clear at the right moment: after a commit in a long session, when the context gets very long, and when you come back to an expired cache. Shows the cost in dollars.",
+  "author": {
+    "name": "Chih-Yun Lin"
+  },
+  "license": "MIT",
+  "keywords": ["cost", "context", "tokens", "prompt-cache", "hooks", "statusline"],
+  "userConfig": {
+    "language": {
+      "type": "string",
+      "title": "Language",
+      "description": "Reminder language: auto (follows $LANG), en, zh-TW, zh-CN, ja, or ko",
+      "default": "auto"
+    },
+    "unit": {
+      "type": "string",
+      "title": "Show usage as",
+      "description": "tokens (default, works for Pro/Max plans) or usd (estimated cost at API prices, for pay-as-you-go API users)",
+      "default": "tokens"
+    },
+    "remind_at_breakpoint": {
+      "type": "number",
+      "title": "Remind after a commit/push/PR from (tokens)",
+      "description": "Context size from which a commit, push, or PR triggers a reminder",
+      "default": 100000,
+      "min": 0
+    },
+    "remind_always": {
+      "type": "number",
+      "title": "Always remind from (tokens)",
+      "description": "Context size from which you are reminded even mid-task",
+      "default": 200000,
+      "min": 0
+    },
+    "remind_step": {
+      "type": "number",
+      "title": "Remind again every (tokens)",
+      "description": "After a reminder, stay quiet until the context grows by this much",
+      "default": 50000,
+      "min": 1000
+    },
+    "idle_min_tokens": {
+      "type": "number",
+      "title": "Expired-cache warning from (tokens)",
+      "description": "Only warn about an expired cache when the context is at least this large",
+      "default": 30000,
+      "min": 0
+    }
+  }
+}

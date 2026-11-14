@@ -1,0 +1,14 @@
+{
+  "name": "context-nudge",
+  "description": "context-nudge: reminders to /clear at the right moment, to save Claude Code usage.",
+  "owner": {
+    "name": "Chih-Yun Lin"
+  },
+  "plugins": [
+    {
+      "name": "context-nudge",
+      "source": "./",
+      "description": "Nudges you to /clear at the right moment, with the cost in dollars."
+    }
+  ]
+}
