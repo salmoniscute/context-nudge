@@ -6,10 +6,7 @@
 
 The longer a session gets, the more every turn costs, because Claude re-reads the whole conversation on every tool call. context-nudge watches for the moments when a fresh session would save the most and tells you, in one line, right inside Claude Code:
 
-```
-💸 Just committed, and the context is 140k tokens (the last turn processed 2.1M tokens in total:
-   every tool call re-reads the whole context). If the next task is unrelated, /clear first. It uses far less.
-```
+![context-nudge in Claude Code: a reminder after a commit, and the status line below the prompt](docs/preview/preview.en.png)
 
 Works with Pro and Max plans and with pay-as-you-go API keys. Reminders in English, 繁體中文, 简体中文, 日本語, and 한국어.
 

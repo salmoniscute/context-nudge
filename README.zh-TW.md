@@ -6,10 +6,7 @@
 
 session 越長，每一輪就越耗用量，因為 Claude 每次呼叫工具都會重讀整段對話。context-nudge 會注意「現在開新 session 最划算」的時刻，直接在 Claude Code 裡用一行訊息提醒你：
 
-```
-💸 剛 commit 完，context 已經 140k tokens（剛才這一輪總共處理了 2.1M tokens，因為每次呼叫工具都會重讀整段 context）。
-   下一件事如果跟這個任務無關，先 /clear 再開始會省很多用量。
-```
+![context-nudge 在 Claude Code 裡：commit 後的提醒，以及輸入框下方的 status line](docs/preview/preview.zh-TW.png)
 
 適用 Pro、Max 方案，也適用按量計費的 API key。提醒訊息支援 English、繁體中文、简体中文、日本語、한국어。
 
