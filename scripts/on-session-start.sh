@@ -7,6 +7,13 @@ cn_have_jq || exit 0
 input=$(cat)
 cn_save_pointer
 
+# A /clear starts a new session: log it so the report can tell whether a
+# reminder was followed, and find the new transcript to measure the savings.
+if [ "$(jq -r '.source // empty' <<<"$input")" = clear ]; then
+  cn_log clear --arg s "$(jq -r '.session_id // empty' <<<"$input")" --arg c "$(jq -r '.cwd // empty' <<<"$input")" \
+    --arg tr "$(jq -r '.transcript_path // empty' <<<"$input")" '{session: $s, cwd: $c, transcript: $tr}'
+fi
+
 # The status line only shows in the terminal. Elsewhere, wait for a terminal
 # session instead of using up the one-time hint.
 case "${CLAUDE_CODE_ENTRYPOINT:-cli}" in cli) ;; *) exit 0 ;; esac

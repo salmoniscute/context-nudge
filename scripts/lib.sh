@@ -124,6 +124,21 @@ cn_save_pointer() {
   printf '%s\n' "$m" >"$f.tmp" 2>/dev/null && mv "$f.tmp" "$f"
 }
 
+# Append one event to the local log that /context-nudge:report reads to see
+# whether reminders were followed. Takes jq args; the filter builds the rest.
+#   cn_log remind --arg kind idle --argjson ctx 90000 '{kind: $kind, ctx: $ctx}'
+cn_log() {
+  local ev="$1" d f; shift
+  d=$(cn_data_dir); f="$d/events.jsonl"
+  mkdir -p "$d" 2>/dev/null || return 0
+  jq -nc --arg ev "$ev" --argjson t "${CONTEXT_NUDGE_NOW:-$(date +%s)}" "$@" \
+    | jq -c --arg ev "$ev" --argjson t "${CONTEXT_NUDGE_NOW:-$(date +%s)}" '{t: $t, ev: $ev} + .' >>"$f" 2>/dev/null
+  # Keep it small: a few thousand recent events is plenty for the report.
+  if [ "$(wc -c <"$f" 2>/dev/null || echo 0)" -gt 1000000 ]; then
+    tail -n 2000 "$f" >"$f.tmp" && mv "$f.tmp" "$f"
+  fi
+}
+
 # Print the analysis JSON for a transcript, or nothing on failure.
 cn_analyze() {
   [ -f "$1" ] || return 1

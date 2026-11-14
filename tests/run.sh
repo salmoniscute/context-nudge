@@ -10,6 +10,8 @@ export CLAUDE_PLUGIN_DATA="$WORK/data" TMPDIR="$WORK/tmp"
 # Never touch the real ~/.claude/context-nudge, even if run from inside a hook.
 export CONTEXT_NUDGE_HOME="$WORK/home-none"
 unset CONTEXT_NUDGE_CONFIG
+# The report also scans installed plugins' data; keep it to this test run.
+export CONTEXT_NUDGE_PLUGINS_DATA="$WORK/plugins-data"
 mkdir -p "$TMPDIR"
 pass=0; fail=0
 
@@ -321,6 +323,63 @@ new fullprice
 prompt 2026-11-13T10:00:00.000Z "x"
 asst m1 claude-opus-5-5 2026-11-13T10:00:05.000Z 0 100000 0 0 500
 has "all priced: not partial" "$(analyze | jq -r .cost_partial)" false
+
+echo "follow-through"
+D="$WORK/fdata"; P="$WORK/fprojects/p"; mkdir -p "$D" "$P"
+# hook HOOK SESSION CWD NOW [TRIGGER/SOURCE]: run a hook as Claude Code would.
+hook() { jq -nc --arg t "$T" --arg s "$2" --arg c "$3" --arg x "${5:-}" \
+  '{session_id:$s,transcript_path:$t,cwd:$c,prompt:"x",source:$x,trigger:$x}' \
+  | CLAUDE_PLUGIN_DATA="$D" CONTEXT_NUDGE_NOW="$4" "$S/$1" >/dev/null; }
+# Followed: long reminder in /a, then /clear in /a; the new session runs 3 calls at 20k.
+new f-a; T="$P/a.jsonl"; : >"$T"
+prompt 2026-11-13T10:00:00.000Z "x"; asst a1 claude-opus-5-5 2026-11-13T10:00:05.000Z 0 160000 0 0 500
+hook on-stop.sh fa /a $((t0 + 10))
+T="$P/b.jsonl"; : >"$T"
+prompt 2026-11-13T10:05:00.000Z "x"
+asst b1 claude-opus-5-5 2026-11-13T10:05:05.000Z 0 20000 0 0 100
+asst b2 claude-opus-5-5 2026-11-13T10:05:10.000Z 0 20000 0 0 100
+asst b3 claude-opus-5-5 2026-11-13T10:05:15.000Z 0 20000 0 0 100
+hook on-session-start.sh fb /a $((t0 + 290)) clear
+# Ignored: long reminder in /c, /clear in another folder.
+T="$P/c.jsonl"; : >"$T"
+prompt 2026-11-13T10:00:00.000Z "x"; asst c1 claude-opus-5-5 2026-11-13T10:00:05.000Z 0 160000 0 0 500
+hook on-stop.sh fc /c $((t0 + 20))
+hook on-session-start.sh fz /elsewhere $((t0 + 30)) clear
+# Auto-compaction doesn't count; a manual /compact does.
+T="$P/d.jsonl"; : >"$T"
+prompt 2026-11-13T10:00:00.000Z "x"; asst d1 claude-opus-5-5 2026-11-13T10:00:05.000Z 0 160000 0 0 500
+hook on-stop.sh fd /d $((t0 + 40))
+hook on-pre-compact.sh fd /d $((t0 + 50)) auto
+T="$P/e.jsonl"; : >"$T"
+prompt 2026-11-13T10:00:00.000Z "x"; asst e1 claude-opus-5-5 2026-11-13T10:00:05.000Z 0 160000 0 0 500
+hook on-stop.sh fe /e $((t0 + 60))
+hook on-pre-compact.sh fe /e $((t0 + 70)) manual
+asst e2 claude-opus-5-5 2026-11-13T10:02:00.000Z 0 30000 0 0 100
+asst e3 claude-opus-5-5 2026-11-13T10:02:10.000Z 0 30000 0 0 100
+# Too late: /clear 2 hours after the reminder.
+T="$P/g.jsonl"; : >"$T"
+prompt 2026-11-13T10:00:00.000Z "x"; asst g1 claude-opus-5-5 2026-11-13T10:00:05.000Z 0 160000 0 0 500
+hook on-stop.sh fg /g $((t0 + 80))
+hook on-session-start.sh fh /g $((t0 + 7300)) clear
+# An expired-cache reminder is counted but not paired.
+T="$P/i.jsonl"; : >"$T"
+prompt 2026-11-13T10:00:00.000Z "x"; asst i1 claude-opus-5-5 2026-11-13T10:00:05.000Z 0 90000 0 0 500
+hook on-prompt.sh fi /i $((t0 + 4000))
+ev=$(cat "$D/events.jsonl")
+has "logs reminders" "$ev" '"ev":"remind","kind":"long","session":"fa","cwd":"/a","ctx":160000'
+has "logs /clear with the new transcript" "$ev" '"ev":"clear","session":"fb"'
+has "logs compaction trigger" "$ev" '"ev":"compact","trigger":"manual"'
+has "logs expired-cache reminder" "$ev" '"kind":"idle"'
+if command -v python3 >/dev/null; then
+  act=$(python3 -I "$S/report.py" --dir "$WORK/fprojects" --days 0 --data "$D" | jq -c .actual)
+  has "report: long shown" "$(jq -c .reminders.long <<<"$act")" '{"shown":5,"followed":2}'
+  has "report: idle counted" "$(jq -c .reminders.idle <<<"$act")" '{"shown":1,"followed":0}'
+  has "report: follow rate" "$(jq -r .followed_pct <<<"$act")" 40
+  # /clear: (160k - 20k) x 3 calls; manual /compact: (160k - 30k) x 2 calls.
+  has "report: saved tokens" "$(jq -r .saved_tokens <<<"$act")" 680000
+  has "report: saved share" "$(jq -r '.saved_pct > 0' <<<"$act")" true
+  none "report: no events, no since" "$(python3 -I "$S/report.py" --dir "$WORK/fprojects" --days 0 --data "$WORK/empty" | jq -r '.actual.since // empty')"
+fi
 
 echo "report"
 if command -v python3 >/dev/null; then

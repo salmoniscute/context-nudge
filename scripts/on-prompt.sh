@@ -18,11 +18,14 @@ last=$(jq -r '.last_ts // empty' <<<"$a")
 [ -n "$last" ] && [ "$ctx" -ge "$MIN" ] || exit 0
 
 k=$(( ctx / 1000 ))
+session=$(jq -r '.session_id // empty' <<<"$input" | tr -cd 'A-Za-z0-9_-')
+cwd=$(jq -r '.cwd // empty' <<<"$input")
+logit() { cn_log remind --arg k "$1" --arg s "$session" --arg c "$cwd" --argjson x "$ctx" \
+  '{kind: $k, session: $s, cwd: $c, ctx: $x}'; }
 usd=false; [ "$(cn_opt UNIT tokens)" = usd ] && usd=true
 
 # Switched model since the last response (the status line records the current
 # one): the new model has no cache of this conversation, however recent it is.
-session=$(jq -r '.session_id // empty' <<<"$input" | tr -cd 'A-Za-z0-9_-')
 f="$(cn_shared_dir)/$session.model.json"
 if [ -n "$session" ] && [ -f "$f" ]; then
   cur_id=$(jq -r '.id // empty' "$f" 2>/dev/null)
@@ -42,6 +45,7 @@ if [ -n "$session" ] && [ -f "$f" ]; then
       [ -n "$cost" ] && c=$(cn_msg idle_cost cost="$cost")
     fi
     [ -n "$c" ] || c=$(cn_msg idle_detail_tokens)
+    logit switch
     cn_emit "$(cn_msg model_switch from="$(cn_model_name "$last_id")" to="$to" k="$k" detail="$c")"
     exit 0
   fi
@@ -58,4 +62,5 @@ if [ "$mins" -ge 120 ]; then away=$(cn_msg hours n="$(( mins / 60 ))"); else awa
 c=""
 if $usd && [ -n "$cost" ]; then c=$(cn_msg idle_cost cost="$cost"); fi
 [ -n "$c" ] || c=$(cn_msg idle_detail_tokens)
+logit idle
 cn_emit "$(cn_msg idle away="$away" k="$k" detail="$c")"

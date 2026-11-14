@@ -160,6 +160,89 @@ def simulate(calls, bp_rounds, cfg, reread, triggers=("bp", "long", "idle")):
     return saved, clears
 
 
+FOLLOW_WINDOW = 1800  # a /clear or /compact within 30 minutes counts as following
+
+
+def load_events(data_dirs, since):
+    """Events the hooks logged (reminders shown, /clear, /compact), oldest first."""
+    seen, out = set(), []
+    for d in data_dirs:
+        try:
+            fh = open(os.path.join(d, "events.jsonl"), errors="replace")
+        except OSError:
+            continue
+        with fh:
+            for line in fh:
+                if line in seen:
+                    continue
+                seen.add(line)
+                try:
+                    e = json.loads(line)
+                except ValueError:
+                    continue
+                if isinstance(e, dict) and isinstance(e.get("t"), (int, float)) and e["t"] >= since:
+                    out.append(e)
+    out.sort(key=lambda e: e["t"])
+    return out
+
+
+def saved_after(ctx, calls):
+    """Tokens and API-price dollars not re-read because the context restarted
+    small: every later call would otherwise have carried `ctx` minus the new
+    starting size, read from cache."""
+    if not calls:
+        return 0, 0.0
+    diff = max(ctx - calls[0]["ctx"], 0)
+    return diff * len(calls), sum(diff * c["p_cr"] for c in calls)
+
+
+def actual(events):
+    """What happened after the reminders that were really shown."""
+    kinds = {"breakpoint": "bp", "long": "long", "idle": "idle", "switch": "switch"}
+    stats = {k: {"shown": 0, "followed": 0} for k in kinds.values()}
+    tokens, usd, used = 0, 0.0, set()
+    for i, e in enumerate(events):
+        if e.get("ev") != "remind" or e.get("kind") not in kinds:
+            continue
+        k = kinds[e["kind"]]
+        stats[k]["shown"] += 1
+        # The expired-cache and model-switch reminders arrive after the message
+        # is sent; following them means /clear next time, which can't be paired.
+        if k not in ("bp", "long"):
+            continue
+        for j in range(i + 1, len(events)):
+            a = events[j]
+            if a["t"] - e["t"] > FOLLOW_WINDOW:
+                break
+            if j in used:
+                continue
+            if a.get("ev") == "clear" and a.get("cwd") and a.get("cwd") == e.get("cwd"):
+                calls = load(a["transcript"])[0] if a.get("transcript") and os.path.exists(a["transcript"]) else []
+            elif (a.get("ev") == "compact" and a.get("trigger") == "manual"
+                  and a.get("session") and a.get("session") == e.get("session")):
+                # Calls after this compaction, up to the next one in the session.
+                end = next((b["t"] for b in events[j + 1:]
+                            if b.get("ev") == "compact" and b.get("session") == a.get("session")), None)
+                calls = load(a["transcript"])[0] if a.get("transcript") and os.path.exists(a["transcript"]) else []
+                calls = [c for c in calls if (c["ts"] or 0) > a["t"] and (end is None or (c["ts"] or 0) <= end)]
+            else:
+                continue
+            used.add(j)
+            stats[k]["followed"] += 1
+            t, u = saved_after(e.get("ctx") or 0, calls)
+            tokens += t; usd += u
+            break
+    pairable = stats["bp"]["shown"] + stats["long"]["shown"]
+    followed = stats["bp"]["followed"] + stats["long"]["followed"]
+    return {
+        "since": datetime.fromtimestamp(events[0]["t"]).strftime("%Y-%m-%d") if events else None,
+        "reminders": stats,
+        "followed_pct": pct(followed, pairable) if pairable else None,
+        "saved_tokens": tokens,
+        "saved_usd": round(usd, 2),
+    }
+
+
 DEFAULTS = dict(language="auto", unit="tokens", remind_at_breakpoint=100000, remind_always=200000,
                 remind_step=50000, idle_min_tokens=30000)
 LANG_NAMES = {"en": "English", "zh-TW": "繁體中文", "zh-CN": "简体中文", "ja": "日本語", "ko": "한국어"}
@@ -266,7 +349,8 @@ def main():
     ap.add_argument("--soft"); ap.add_argument("--hard"); ap.add_argument("--step"); ap.add_argument("--idle-min")
     a = ap.parse_args()
     data_dirs = [d for d in a.data if d and "${" not in d]
-    data_dirs += glob.glob(os.path.expanduser("~/.claude/plugins/data/*context-nudge*"))
+    plugins_data = os.environ.get("CONTEXT_NUDGE_PLUGINS_DATA") or os.path.expanduser("~/.claude/plugins/data")
+    data_dirs += glob.glob(os.path.join(plugins_data, "*context-nudge*"))
     settings_files = a.settings if a.settings is not None else [
         os.path.expanduser("~/.claude/settings.json"), os.path.join(os.getcwd(), ".claude", "settings.json"),
         os.path.join(os.getcwd(), ".claude", "settings.local.json")]
@@ -309,6 +393,9 @@ def main():
             saved_usd=round(simulate(calls, bp_rounds, cfg, 40000)[0], 2)))
 
     total = sum(total_b.values())
+    act = actual(load_events(data_dirs, since))
+    # Share of the usage there would have been without the followed reminders.
+    act["saved_pct"] = pct(act["saved_usd"], total + act["saved_usd"]) if act["saved_usd"] else 0.0
     days_span = max((last_ts - first_ts) / 86400, 1) if first_ts and last_ts else 1
     turns = sum(r["turns"] for r in rows)
     rows.sort(key=lambda r: -r["usd"])
@@ -332,6 +419,7 @@ def main():
             f"reread_{r // 1000}k": {k: pct(v[0], total) for k, v in scen[r].items()} for r in scen},
         "savings_usd_reread_40k": {k: round(v[0], 2) for k, v in scen[40000].items()},
         "turns": turns,
+        "actual": act,
         "reminders": {"total": scen[40000]["all"][1],
                       "per_day": round(scen[40000]["all"][1] / days_span, 1),
                       "turns_per_reminder": round(turns / scen[40000]["all"][1], 1) if scen[40000]["all"][1] else None},

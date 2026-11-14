@@ -7,6 +7,13 @@
         ]
       }
     ],
+    "PreCompact": [
+      {
+        "hooks": [
+          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/on-pre-compact.sh", "timeout": 10 }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [

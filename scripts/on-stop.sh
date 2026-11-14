@@ -8,6 +8,7 @@ input=$(cat)
 [ "$(jq -r '.stop_hook_active // false' <<<"$input")" = true ] && exit 0
 transcript=$(jq -r '.transcript_path // empty' <<<"$input")
 session=$(jq -r '.session_id // "unknown"' <<<"$input" | tr -cd 'A-Za-z0-9_-')
+cwd=$(jq -r '.cwd // empty' <<<"$input")
 
 cn_save_effective
 cn_save_pointer
@@ -66,4 +67,6 @@ if [ "$kind" = breakpoint ]; then
 else
   msg=$(cn_msg long k="$k" detail="$detail")
 fi
+cn_log remind --arg k "$kind" --arg s "$session" --arg c "$cwd" --argjson x "$ctx" \
+  '{kind: $k, session: $s, cwd: $c, ctx: $x}'
 cn_emit "$msg"
