@@ -23,13 +23,13 @@ session 越長，每一輪就越耗用量，因為 Claude 每次呼叫工具都�
 **1. 在終端機執行：**
 
 ```bash
-claude plugin marketplace add OWNER/context-nudge
+claude plugin marketplace add salmoniscute/context-nudge
 claude plugin install context-nudge@context-nudge
 ```
 
 看到 `✔ Successfully installed plugin: context-nudge@context-nudge` 就是裝好了。另外出現「userConfig options not yet set」是正常的，因為每個選項都有預設值。
 
-如果你已經在終端機的 Claude Code 裡面，也可以直接輸入 `/plugin marketplace add OWNER/context-nudge` 和 `/plugin install context-nudge@context-nudge`。
+如果你已經在終端機的 Claude Code 裡面，也可以直接輸入 `/plugin marketplace add salmoniscute/context-nudge` 和 `/plugin install context-nudge@context-nudge`。
 
 **2. 重新啟動 Claude Code。** 關掉再開一個新的 session。plugin 是在 session 啟動時載入的。
 

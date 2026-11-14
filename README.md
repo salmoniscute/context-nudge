@@ -23,13 +23,13 @@ You need:
 **1. In a terminal, run:**
 
 ```bash
-claude plugin marketplace add OWNER/context-nudge
+claude plugin marketplace add salmoniscute/context-nudge
 claude plugin install context-nudge@context-nudge
 ```
 
 You should see `✔ Successfully installed plugin: context-nudge@context-nudge`. The note about "userConfig options not yet set" is normal: every option has a default.
 
-If you're already inside Claude Code in the terminal, you can type `/plugin marketplace add OWNER/context-nudge` and `/plugin install context-nudge@context-nudge` there instead.
+If you're already inside Claude Code in the terminal, you can type `/plugin marketplace add salmoniscute/context-nudge` and `/plugin install context-nudge@context-nudge` there instead.
 
 **2. Restart Claude Code.** Close it and start a new session. Plugins load when a session starts.
 
