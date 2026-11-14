@@ -69,6 +69,26 @@ cn_state_dir() {
 
 # Hooks are the one place that reliably receives the user's /config options.
 # Save what they resolved to, so /context-nudge:report can use the same values.
+# A directory both the hooks and the copied status line can reach. The status
+# line gets no CLAUDE_PLUGIN_DATA, so this can't live under cn_data_dir.
+cn_shared_dir() {
+  local d="${TMPDIR:-/tmp}/context-nudge-shared"
+  mkdir -p "$d" 2>/dev/null && printf '%s' "$d"
+}
+
+# claude-opus-5-5[1m] / claude-opus-5-5-20261101 -> claude-opus-5-5
+CN_JQ_BASE='def base: (capture("(?<id>claude-[a-z]+-[0-9]+(-[0-9](?![0-9]))?)") | .id) // .;'
+cn_model_base() { jq -rn --arg m "$1" "$CN_JQ_BASE"' $m | base'; }
+# claude-opus-5-5 -> Opus 5.5, for models we only know by id.
+cn_model_name() {
+  jq -rn --arg m "$1" "$CN_JQ_BASE"'
+    ($m | base) as $b
+    | if ($b | startswith("claude-")) then
+        ($b | split("-") | .[1:]) as $p
+        | ($p[0][0:1] | ascii_upcase) + $p[0][1:] + " " + ($p[1:] | join("."))
+      else $m end'
+}
+
 cn_save_effective() {
   local f; f="$(cn_data_dir)/effective.json"
   mkdir -p "$(cn_data_dir)" 2>/dev/null || return 0

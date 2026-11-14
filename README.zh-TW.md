@@ -54,6 +54,7 @@ session 還短的時候，什麼都不會出現。只有在開新 session 真的
 | --- | --- | --- |
 | 💸 **剛 commit 完／剛 push 完／PR 剛送出**，context 已經… | 一輪結束時剛成功執行 `git commit`、`git push`、`gh pr create` 或 `npm publish`，而且 context 超過 100k tokens | 要開始做無關的事：輸入 `/clear`。要繼續做同一件事：不用理它。 |
 | 💸 **Context 已到 …k tokens** | context 超過 200k tokens，就算任務還沒做完 | 任務做完了：`/clear`。還在做，但前面的對話已經用不到：`/compact`。 |
+| 🔄 **換了模型（… → …）** | 用 `/model` 換成別的模型後送出訊息。新模型沒有這段對話的快取。需要裝 status line。 | 這次送出已經重新載入了 context。如果問題跟前面無關，下次換模型前先 `/clear`。 |
 | ⏳ **距離上一輪已經…，快取過期了** | 離開超過快取時效（通常是 1 小時）後再送出訊息 | 這次送出已經重新載入了 context。如果問題跟這個 session 無關，下次先 `/clear` 再問。 |
 
 提醒過一次後，要等 context 再多 50k tokens 才會再提醒，不會每一輪都跳出來。`/compact` 之後會重新計算。
@@ -79,7 +80,8 @@ Opus 5.5 │ ▰▰▰▰▰▰▰▱▱▱ 140k/200k │ ❄ 快取已過期
 
 - `▰▰▰▰▰▰▰▱▱▱ 140k/200k` 是目前的 context 大小，進度條以 `remind_always` 門檻為滿格：100k 以下是綠色，超過 100k 變黃色，超過 200k 變紅色。
 - `⏱ 快取 52m` 是快取還剩多久過期。
-- `unit` 設成 `usd` 時，最後會多顯示 session 花費。
+- `unit` 設成 `usd` 時，最後會多顯示 session 花費。顯示 `≥$3.42` 代表有部分回應的模型不在價格表上，實際花費會更高。
+- `❄ 快取已過期（換了模型）` 在 `/model` 換模型後出現，因為新模型還沒有這段對話的快取。
 - `❄ 快取已過期` 只在快取過期後出現。這是唯一能在你**送出訊息之前**就看到的警告，也正是它還派得上用場的時候。
 
 執行一次 `/context-nudge:setup-statusline` 就能裝好；更新 plugin 之後要再執行一次。status line 會顯示在終端機版的 Claude Code 裡。
@@ -163,7 +165,7 @@ claude plugin uninstall context-nudge@context-nudge
 
 - **全部在你的電腦上執行。** plugin 讀的是 Claude Code 原本就存在本機的對話紀錄，不會傳送任何資料。
 - **Pro/Max 額度怎麼計算 token 沒有公開**，所以 plugin 不會顯示「用掉額度的 %」，只顯示 token 數。快取讀取在 API 上比其他 token 便宜很多，對額度的消耗很可能也比較少，所以「處理了多少」這個數字看起來會比實際影響大一些。真正貴的是快取過期後的重新寫入。
-- **`unit: usd` 用的是 API 牌價**，放在 [`scripts/prices.json`](scripts/prices.json)（2026-11-03 更新）。不在價格表裡的模型會改用 token 顯示。
+- **`unit: usd` 用的是 API 牌價**，放在 [`scripts/prices.json`](scripts/prices.json)（2026-11-03 更新）。不在價格表裡的模型會改用 token 顯示。如果只有部分回應用了這種模型，金額會顯示成下限（`≥$3.42`）。
 - **Subagent** 有自己的對話紀錄，不算在內。
 - **數字可能會落後一次回應。** Claude Code 是非同步寫入對話紀錄的，plugin 讀取時，這一輪的最後一次回應有時還沒寫進去。
 

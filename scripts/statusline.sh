@@ -9,6 +9,16 @@ input=$(cat)
 transcript=$(jq -r '.transcript_path // empty' <<<"$input")
 model=$(jq -r '.model.display_name // empty' <<<"$input")
 model_id=$(jq -r '.model.id // empty' <<<"$input")
+session=$(jq -r '.session_id // empty' <<<"$input" | tr -cd 'A-Za-z0-9_-')
+
+# Tell the prompt hook which model is selected now: the hook's own input
+# doesn't say, and after /model the transcript still shows the old one.
+if [ -n "$session" ] && [ -n "$model_id" ] && dir=$(cn_shared_dir); then
+  f="$dir/$session.model.json"
+  m=$(jq -nc --arg id "$model_id" --arg name "$model" '{id: $id, name: $name}')
+  [ "$(cat "$f" 2>/dev/null)" = "$m" ] || printf '%s\n' "$m" >"$f"
+  find "$dir" -name '*.model.json' -mtime +7 -delete 2>/dev/null
+fi
 [ -f "$transcript" ] || { echo "ctx –"; exit 0; }
 
 # The status line redraws often; re-analyse only when the transcript grows.
@@ -32,8 +42,7 @@ cost=$(jq -r '.session_cost_s // empty' <<<"$a")
 # The prompt cache is per model: after a /model switch the next turn re-writes
 # the whole context, however recently the last one ran. Compare base ids so
 # suffixes like "[1m]" or a date don't count as a switch.
-switched=$(jq -rn --arg cur "$model_id" --arg last "$(jq -r '.model // empty' <<<"$a")" '
-  def base: (capture("(?<id>claude-[a-z]+-[0-9]+(-[0-9](?![0-9]))?)") | .id) // .;
+switched=$(jq -rn --arg cur "$model_id" --arg last "$(jq -r '.model // empty' <<<"$a")" "$CN_JQ_BASE"'
   $cur != "" and $last != "" and ($cur | base) != ($last | base)')
 
 if   [ "$ctx" -ge "$HARD" ]; then color='\033[31m'
@@ -74,5 +83,7 @@ elif [ "$last" -gt 0 ]; then
   fi
 fi
 
+# ≥ when some responses used a model missing from prices.json and count as $0.
+[ "$(jq -r '.cost_partial' <<<"$a")" = true ] && cost="≥${cost}"
 [ -n "$cost" ] && [ "$(cn_opt UNIT tokens)" = usd ] && out="${out}${sep}${cost}"
 printf '%b\n' "$out"

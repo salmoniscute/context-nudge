@@ -54,6 +54,7 @@ Nothing at all while sessions are short. You only hear from the plugin when a fr
 | --- | --- | --- |
 | 💸 **Just committed / pushed / PR is out**, and the context is … | A turn ends with a successful `git commit`, `git push`, `gh pr create`, or `npm publish`, and the context is over 100k tokens | Starting something unrelated? Type `/clear`. Continuing the same work? Ignore it. |
 | 💸 **Context is at …k tokens** | The context passes 200k tokens, even mid-task | Done with the task: `/clear`. Still working, but the early conversation no longer matters: `/compact`. |
+| 🔄 **Model switched (… → …)** | You send a message after `/model` switched to a different model. The new model has no cache of this conversation. Needs the status line. | This message already re-loaded the context. If your question is unrelated, `/clear` before switching next time. |
 | ⏳ **… since the last turn, so the prompt cache has expired** | You send a message after being away longer than the cache lasts (usually 1 hour) | This message already re-loaded the context. If your question is unrelated to the session, `/clear` before asking next time. |
 
 After a reminder, the plugin stays quiet until the context grows another 50k tokens, so it doesn't repeat itself every turn. `/compact` resets the count.
@@ -79,7 +80,8 @@ Opus 5.5 │ ▰▰▰▰▰▰▰▱▱▱ 140k/200k │ ❄ cache cold
 
 - `▰▰▰▰▰▰▰▱▱▱ 140k/200k` is the current context size, filling toward the `remind_always` threshold: green below 100k, yellow from 100k, red from 200k.
 - `⏱ cache 52m` is how long until the prompt cache expires.
-- With `unit: usd`, the session cost is added at the end.
+- With `unit: usd`, the session cost is added at the end. `≥$3.42` means some responses used a model not in the price table, so the real cost is higher.
+- `❄ cache cold (model switched)` appears right after `/model`, because the new model has no cache of this conversation yet.
 - `❄ cache cold` appears once the prompt cache has expired. It's the only warning you can see *before* you send a message, which is when it's still useful.
 
 Run `/context-nudge:setup-statusline` once to set it up, and again after updating the plugin. The status line shows in Claude Code in the terminal.
@@ -163,7 +165,7 @@ That's one person's history. Run `/context-nudge:report` to see yours.
 
 - **Everything runs on your machine.** The plugin reads the transcripts Claude Code already saves locally. Nothing is sent anywhere.
 - **How Pro/Max limits count tokens isn't published**, so the plugin doesn't show "% of your limit". It shows tokens. Cached reads are much cheaper than other tokens on the API and probably count for less against limits too, so a big "processed" number overstates the impact somewhat. Re-writes after the cache expires are the expensive part.
-- **`unit: usd` uses API list prices** from [`scripts/prices.json`](scripts/prices.json) (updated 2026-11-03). Models not in the table are shown in tokens.
+- **`unit: usd` uses API list prices** from [`scripts/prices.json`](scripts/prices.json) (updated 2026-11-03). Models not in the table are shown in tokens. If only some responses used such a model, the cost is shown as a lower bound (`≥$3.42`).
 - **Subagents** run in their own transcripts and aren't counted.
 - **The numbers can trail by one response.** Claude Code writes the transcript asynchronously, so the very last response of a turn is sometimes missing when the plugin reads it.
 

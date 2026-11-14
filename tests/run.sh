@@ -233,6 +233,43 @@ has "remind_always 0: shows context" "$sl" "87k"
 case "$sl" in *rror*|*/0k*|*▱*) bad "remind_always 0: no bar, no error" "$sl" ;; *) ok "remind_always 0: no bar, no error" ;; esac
 has "missing transcript" "$(echo '{}' | "$S/statusline.sh")" "ctx –"
 
+echo "model switch"
+new sw
+prompt 2026-11-13T10:00:00.000Z "x"
+asst m1 claude-opus-5-5 2026-11-13T10:00:05.000Z 0 87000 0 0 500
+# sl SESSION MODEL_ID NAME: render the status line, which records the current model.
+slm() { jq -nc --arg t "$T" --arg s "$1" --arg id "$2" --arg n "$3" \
+  '{session_id:$s,transcript_path:$t,model:{id:$id,display_name:$n}}' | CONTEXT_NUDGE_NOW=$((t0 + 60)) "$S/statusline.sh" >/dev/null; }
+sub() { jq -nc --arg t "$T" --arg s "$1" '{session_id:$s,transcript_path:$t,prompt:"x"}' \
+  | CONTEXT_NUDGE_NOW=$((t0 + 60)) "$S/on-prompt.sh" | jq -r '.systemMessage // empty'; }
+slm sw1 claude-sonnet-5-5 "Sonnet 5.5"
+msg=$(sub sw1)
+has "switch warns while cache is warm" "$msg" "Model switched (Opus 5.5 → Sonnet 5.5)"
+has "switch: tokens mode" "$msg" "87k tokens of context, without the cache discount"
+msg=$(jq -nc --arg t "$T" '{session_id:"sw1",transcript_path:$t,prompt:"x"}' \
+  | CONTEXT_NUDGE_UNIT=usd CONTEXT_NUDGE_NOW=$((t0 + 60)) "$S/on-prompt.sh" | jq -r '.systemMessage // empty')
+has "switch: usd priced at the new model" "$msg" "about \$"
+slm sw2 claude-opus-5-5 "Opus 5.5"
+none "same model: no switch warning" "$(sub sw2)"
+slm sw3 "claude-opus-5-5[1m]" "Opus 5.5 (1M)"
+none "same model with suffix: no switch warning" "$(sub sw3)"
+none "no status line: no switch warning" "$(sub sw-none)"
+has "model name from id" "$(source "$S/lib.sh"; cn_model_name claude-sonnet-5-5-20261101)" "Sonnet 5.5"
+
+echo "partial pricing"
+new partial
+prompt 2026-11-13T10:00:00.000Z "x"
+asst m1 claude-opus-5-5 2026-11-13T10:00:05.000Z 0 100000 0 0 500
+asst m2 some-other-model 2026-11-13T10:00:10.000Z 0 160000 0 0 500
+has "partial: flagged" "$(analyze | jq -r .cost_partial)" true
+sl=$(jq -nc --arg t "$T" '{transcript_path:$t}' | CONTEXT_NUDGE_UNIT=usd CONTEXT_NUDGE_NOW=$((t0 + 60)) "$S/statusline.sh")
+has "partial: status line shows lower bound" "$sl" "≥\$"
+has "partial: reminder says at least" "$(CONTEXT_NUDGE_UNIT=usd stop s-partial)" "this session ≥ \$"
+new fullprice
+prompt 2026-11-13T10:00:00.000Z "x"
+asst m1 claude-opus-5-5 2026-11-13T10:00:05.000Z 0 100000 0 0 500
+has "all priced: not partial" "$(analyze | jq -r .cost_partial)" false
+
 echo "report"
 if command -v python3 >/dev/null; then
   mkdir -p "$WORK/projects/p1"

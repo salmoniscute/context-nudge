@@ -48,7 +48,8 @@ detail=""
 if [ "$(cn_opt UNIT tokens)" = usd ]; then
   total=$(jq -r '.session_cost_s // empty' <<<"$a")
   round=$(jq -r '.round_cost_s // empty' <<<"$a")
-  if [ -n "$total" ] && [ -n "$round" ] && [ "$round" != "$total" ]; then detail=$(cn_msg money_full total="$total" round="$round")
+  if [ -n "$total" ] && [ "$(jq -r '.cost_partial' <<<"$a")" = true ]; then detail=$(cn_msg money_partial total="$total")
+  elif [ -n "$total" ] && [ -n "$round" ] && [ "$round" != "$total" ]; then detail=$(cn_msg money_full total="$total" round="$round")
   elif [ -n "$total" ]; then detail=$(cn_msg money_total total="$total"); fi
 fi
 if [ -z "$detail" ]; then

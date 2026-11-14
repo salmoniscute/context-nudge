@@ -101,6 +101,9 @@ reduce (inputs | fromjson? | select(type == "object")) as $e (
         in_current_round: ($L.r == $s.round),
         breakpoint: (if $L.r == $s.round then $bp else null end),
         session_cost: (if ($costs | all(. == null)) then null else ($costs | sum_costs) end),
+        # Some responses priced, some not (model missing from prices.json):
+        # session_cost is then a lower bound.
+        cost_partial: (($costs | any(. == null)) and ($costs | any(. != null))),
         round_cost: (if ($round_costs | length) == 0 or ($round_costs | all(. == null)) then null
                      else ($round_costs | sum_costs) end),
         rewrite_cost: $rewrite,

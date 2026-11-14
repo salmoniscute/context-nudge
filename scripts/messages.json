@@ -17,7 +17,9 @@
     "detail_tokens": " (the last turn processed {round} tokens in total: every tool call re-reads the whole context)",
     "idle_detail_tokens": ", without the cache discount",
     "cache_left": "cache {t}",
-    "cache_cold_model": "cache cold (model switched)"
+    "cache_cold_model": "cache cold (model switched)",
+    "model_switch": "🔄 Model switched ({from} → {to}), and the new model has no cache of this conversation. This turn re-writes {k}k tokens of context{detail}. If this question is unrelated, /clear before switching next time.",
+    "money_partial": " (this session ≥ {total} at API prices; some responses used a model not in the price table)"
   },
   "zh-TW": {
     "what_commit": "剛 commit 完",
@@ -36,7 +38,9 @@
     "detail_tokens": "（剛才這一輪總共處理了 {round} tokens，因為每次呼叫工具都會重讀整段 context）",
     "idle_detail_tokens": "，這次沒有快取折扣",
     "cache_left": "快取 {t}",
-    "cache_cold_model": "快取已過期（換了模型）"
+    "cache_cold_model": "快取已過期（換了模型）",
+    "model_switch": "🔄 換了模型（{from} → {to}），新模型沒有這段對話的快取。這次會把 {k}k tokens 的 context 重新寫入快取{detail}。如果這個問題跟前面無關，下次換模型前先 /clear。",
+    "money_partial": "（這個 session 至少 {total}，部分回應的模型不在價格表上，以 API 價格估算）"
   },
   "zh-CN": {
     "what_commit": "刚 commit 完",
@@ -55,7 +59,9 @@
     "detail_tokens": "（刚才这一轮总共处理了 {round} tokens，因为每次调用工具都会重新读取整段上下文）",
     "idle_detail_tokens": "，这次没有缓存折扣",
     "cache_left": "缓存 {t}",
-    "cache_cold_model": "缓存已过期（换了模型）"
+    "cache_cold_model": "缓存已过期（换了模型）",
+    "model_switch": "🔄 换了模型（{from} → {to}），新模型没有这段对话的缓存。这次会把 {k}k tokens 的上下文重新写入缓存{detail}。如果这个问题和前面无关，下次换模型前先 /clear。",
+    "money_partial": "（这个会话至少 {total}，部分回复的模型不在价格表中，按 API 价格估算）"
   },
   "ja": {
     "what_commit": "コミットが完了しました",
@@ -74,7 +80,9 @@
     "detail_tokens": "（直前のターンで合計 {round} トークンを処理しました。ツールを呼び出すたびにコンテキスト全体を読み直すためです）",
     "idle_detail_tokens": "（キャッシュ割引なし）",
     "cache_left": "キャッシュ {t}",
-    "cache_cold_model": "キャッシュ切れ（モデル変更）"
+    "cache_cold_model": "キャッシュ切れ（モデル変更）",
+    "model_switch": "🔄 モデルが切り替わりました（{from} → {to}）。新しいモデルにはこの会話のキャッシュがありません。このターンでは {k}k トークンのコンテキストがキャッシュに再書き込みされます{detail}。前の会話と無関係な質問なら、次回はモデルを切り替える前に /clear してください。",
+    "money_partial": "（このセッションで少なくとも {total}。一部の応答のモデルは料金表にありません。API 料金で換算）"
   },
   "ko": {
     "what_commit": "커밋을 마쳤습니다",
@@ -93,6 +101,8 @@
     "detail_tokens": " (직전 턴에서 총 {round} 토큰을 처리했습니다. 도구를 호출할 때마다 컨텍스트 전체를 다시 읽기 때문입니다)",
     "idle_detail_tokens": " (캐시 할인 없음)",
     "cache_left": "캐시 {t}",
-    "cache_cold_model": "캐시 만료 (모델 변경)"
+    "cache_cold_model": "캐시 만료 (모델 변경)",
+    "model_switch": "🔄 모델이 바뀌었습니다 ({from} → {to}). 새 모델에는 이 대화의 캐시가 없습니다. 이번 턴에서 {k}k 토큰의 컨텍스트가 캐시에 다시 기록됩니다{detail}. 앞의 대화와 관련 없는 질문이라면 다음에는 모델을 바꾸기 전에 먼저 /clear 하세요.",
+    "money_partial": " (이 세션 최소 {total}, 일부 응답의 모델이 가격표에 없음, API 가격 기준)"
   }
 }
