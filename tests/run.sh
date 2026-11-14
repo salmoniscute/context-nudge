@@ -39,6 +39,14 @@ stop()   { jq -nc --arg t "$T" --arg s "$1" '{session_id:$s,transcript_path:$t}'
 submit() { jq -nc --arg t "$T" '{session_id:"p",transcript_path:$t,prompt:"x"}' | "$S/on-prompt.sh" | jq -r '.systemMessage // empty'; }
 analyze() { grep -E '"type":"(assistant|user)"' "$T" | jq -nR --slurpfile p "$S/prices.json" -f "$S/analyze.jq"; }
 
+# LC_ALL would override the per-test LANG values below.
+unset LC_ALL LC_MESSAGES
+# Run under a UTF-8 ctype whatever the caller's locale, so multibyte bugs
+# (bash 3.2 reading "$var▰" as one variable name) show up here and not only on
+# the user's machine. LC_CTYPE does not affect the message language.
+for l in en_US.UTF-8 C.UTF-8 en_US.utf8 C.utf8; do
+  if locale -a 2>/dev/null | grep -qx "$l"; then export LC_CTYPE=$l; break; fi
+done
 export CONTEXT_NUDGE_LANGUAGE=en
 # Keep "auto" deterministic: don't fall back to this Mac's system language.
 export CONTEXT_NUDGE_NO_SYSTEM_LANG=1
@@ -220,6 +228,9 @@ has "same model with suffix: still warm" "$sl" "cache 4m"
 cp -R "$S" "$WORK/copy"; echo '{"language":"ko"}' >"$WORK/copy/config.json"
 sl=$(jq -nc --arg t "$T" '{transcript_path:$t}' | CONTEXT_NUDGE_LANGUAGE= CONTEXT_NUDGE_NOW=$((t0 + 4000)) "$WORK/copy/statusline.sh")
 has "copied status line uses config.json" "$sl" "캐시 만료"
+sl=$(jq -nc --arg t "$T" '{transcript_path:$t}' | CONTEXT_NUDGE_REMIND_ALWAYS=0 CONTEXT_NUDGE_NOW=$((t0 + 60)) "$S/statusline.sh" 2>&1)
+has "remind_always 0: shows context" "$sl" "87k"
+case "$sl" in *rror*|*/0k*|*▱*) bad "remind_always 0: no bar, no error" "$sl" ;; *) ok "remind_always 0: no bar, no error" ;; esac
 has "missing transcript" "$(echo '{}' | "$S/statusline.sh")" "ctx –"
 
 echo "report"

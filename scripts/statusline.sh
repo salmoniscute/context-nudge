@@ -43,19 +43,23 @@ dim='\033[2m'
 reset='\033[0m'
 sep=" ${dim}│${reset} "
 
-# 10-cell bar filled toward the hard threshold, at least one cell once there is any context.
-cells=10
-filled=$(( ctx * cells / HARD ))
-[ "$filled" -gt "$cells" ] && filled=$cells
-[ "$filled" -eq 0 ] && [ "$ctx" -gt 0 ] && filled=1
-bar=""
-for ((i = 0; i < cells; i++)); do
-  if [ "$i" -lt "$filled" ]; then bar="${bar}▰"; else bar="${bar}▱"; fi
-done
-
 out=""
 [ -n "$model" ] && out="${model}${sep}"
-out="${out}${color}${bar} $(( ctx / 1000 ))k${reset}${dim}/$(( HARD / 1000 ))k${reset}"
+if [ "$HARD" -gt 0 ]; then
+  # 10-cell bar filled toward the hard threshold, at least one cell once there is any context.
+  cells=10
+  filled=$(( ctx * cells / HARD ))
+  [ "$filled" -gt "$cells" ] && filled=$cells
+  [ "$filled" -eq 0 ] && [ "$ctx" -gt 0 ] && filled=1
+  bar=""
+  for ((i = 0; i < cells; i++)); do
+    if [ "$i" -lt "$filled" ]; then bar="${bar}▰"; else bar="${bar}▱"; fi
+  done
+  out="${out}${color}${bar} $(( ctx / 1000 ))k${reset}${dim}/$(( HARD / 1000 ))k${reset}"
+else
+  # remind_always 0 means "always remind": there is no threshold to fill toward.
+  out="${out}${color}$(( ctx / 1000 ))k${reset}"
+fi
 
 now=${CONTEXT_NUDGE_NOW:-$(date +%s)}
 if [ "$switched" = true ]; then

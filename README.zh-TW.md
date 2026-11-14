@@ -167,18 +167,6 @@ claude plugin uninstall context-nudge@context-nudge
 - **Subagent** 有自己的對話紀錄，不算在內。
 - **數字可能會落後一次回應。** Claude Code 是非同步寫入對話紀錄的，plugin 讀取時，這一輪的最後一次回應有時還沒寫進去。
 
-## 參與貢獻
-
-**新增語言。** 所有文字都在 [`scripts/messages.json`](scripts/messages.json)。複製 `en` 那一段來翻譯，`{placeholder}` 要原樣保留，再到 [`scripts/lib.sh`](scripts/lib.sh) 的 `cn_lang` 和 [`scripts/report.py`](scripts/report.py) 的 `lang_code` 加上對應的 locale。缺少的 key 會自動用英文顯示。也非常歡迎母語者幫忙檢查現有的翻譯。
-
-**開發。**
-
-```bash
-bash tests/run.sh                         # 測試（需要 jq；report 的測試需要 python3）
-claude plugin validate .                  # 檢查 manifest
-claude --plugin-dir .                     # 不安裝，直接試用目前的程式碼
-```
-
 ## 授權
 
 MIT
