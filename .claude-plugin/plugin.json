@@ -1,6 +1,6 @@
 {
   "name": "context-nudge",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Nudges you to /clear at the right moment: after a commit in a long session, when the context gets very long, and when you come back to an expired cache. Shows usage in tokens, or estimated cost in dollars for API users.",
   "author": {
     "name": "Chih-Yun Lin"
