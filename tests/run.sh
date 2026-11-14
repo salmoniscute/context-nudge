@@ -211,6 +211,11 @@ has "shows cold cache" "$sl" "cache cold"
 case "$sl" in *⏱*) bad "cold cache: no countdown" "$sl" ;; *) ok "cold cache: no countdown" ;; esac
 sl=$(jq -nc --arg t "$T" '{transcript_path:$t}' | CONTEXT_NUDGE_LANGUAGE=ja CONTEXT_NUDGE_NOW=$((t0 + 4000)) "$S/statusline.sh")
 has "cold cache is translated" "$sl" "キャッシュ切れ"
+sl=$(jq -nc --arg t "$T" '{transcript_path:$t,model:{id:"claude-sonnet-5-5"}}' | CONTEXT_NUDGE_NOW=$((t0 + 60)) "$S/statusline.sh")
+has "model switch: cache shown cold" "$sl" "cache cold (model switched)"
+case "$sl" in *⏱*) bad "model switch: no countdown" "$sl" ;; *) ok "model switch: no countdown" ;; esac
+sl=$(jq -nc --arg t "$T" '{transcript_path:$t,model:{id:"claude-opus-5-5[1m]"}}' | CONTEXT_NUDGE_NOW=$((t0 + 60)) "$S/statusline.sh")
+has "same model with suffix: still warm" "$sl" "cache 4m"
 # The copied status line reads its language from config.json next to it.
 cp -R "$S" "$WORK/copy"; echo '{"language":"ko"}' >"$WORK/copy/config.json"
 sl=$(jq -nc --arg t "$T" '{transcript_path:$t}' | CONTEXT_NUDGE_LANGUAGE= CONTEXT_NUDGE_NOW=$((t0 + 4000)) "$WORK/copy/statusline.sh")
