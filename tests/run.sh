@@ -263,6 +263,28 @@ jq -nc --arg t "$T" '{session_id:"ln",transcript_path:$t}' \
   | CONTEXT_NUDGE_HOME="$WORK/nohome" CLAUDE_PLUGIN_ROOT="$ROOT" "$S/on-stop.sh" >/dev/null
 [ -e "$WORK/nohome" ] && bad "no status line: hook creates nothing" "$(ls "$WORK/nohome")" || ok "no status line: hook creates nothing"
 
+echo "session start"
+C="$WORK/conf"; mkdir -p "$C"
+ss() { jq -nc --arg c "$WORK/proj" '{session_id:"ss",source:"startup",cwd:$c}' \
+  | CLAUDE_CONFIG_DIR="$C" "$@" "$S/on-session-start.sh" | jq -r '.systemMessage // empty'; }
+rm -f "$CLAUDE_PLUGIN_DATA/statusline-hint-shown"
+none "not in the terminal: no hint yet" "$(ss env CLAUDE_CODE_ENTRYPOINT=claude-vscode)"
+has "no status line: hint" "$(ss env)" "/context-nudge:setup-statusline"
+none "hint only once" "$(ss env)"
+rm -f "$CLAUDE_PLUGIN_DATA/statusline-hint-shown"
+echo '{"statusLine":{"type":"command","command":"~/.claude/context-nudge/statusline.sh"}}' >"$C/settings.json"
+none "status line set up: no hint" "$(ss env)"
+rm "$C/settings.json"; mkdir -p "$WORK/proj/.claude"
+echo '{"statusLine":{"type":"command","command":"~/.claude/context-nudge/combined.sh"}}' >"$WORK/proj/.claude/settings.local.json"
+none "set up in project settings: no hint" "$(ss env)"
+rm -rf "$WORK/proj/.claude"
+echo '{"statusLine":{"type":"command","command":"my-own-line"}}' >"$C/settings.json"
+has "other status line: still hinted once" "$(ss env CONTEXT_NUDGE_LANGUAGE=zh-TW)" "只會提醒這一次"
+rm "$C/settings.json"
+mkdir -p "$WORK/ssh"; echo '{}' >"$WORK/ssh/plugin.json"
+ss env CONTEXT_NUDGE_HOME="$WORK/ssh" CLAUDE_PLUGIN_ROOT="$ROOT" >/dev/null
+has "session start refreshes pointer" "$(jq -r .root "$WORK/ssh/plugin.json")" "$ROOT"
+
 echo "model switch"
 new sw
 prompt 2026-11-13T10:00:00.000Z "x"

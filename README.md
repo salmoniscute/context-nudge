@@ -84,7 +84,7 @@ Opus 5.5 │ ▰▰▰▰▰▰▰▱▱▱ 140k/200k │ ❄ cache cold
 - `❄ cache cold (model switched)` appears right after `/model`, because the new model has no cache of this conversation yet.
 - `❄ cache cold` appears once the prompt cache has expired. It's the only warning you can see *before* you send a message, which is when it's still useful.
 
-Run `/context-nudge:setup-statusline` once to set it up. It updates together with the plugin and uses the same [settings](#settings) as the reminders. The status line shows in Claude Code in the terminal.
+Run `/context-nudge:setup-statusline` once to set it up. It updates together with the plugin and uses the same [settings](#settings) as the reminders. The status line shows in Claude Code in the terminal. If you haven't set it up, the plugin mentions it once when a terminal session starts.
 
 The bar fills toward `remind_always` (200k by default), not toward the model's context window. Even with a 1M-token window, every turn re-sends the whole context, so the cost grows with its size.
 

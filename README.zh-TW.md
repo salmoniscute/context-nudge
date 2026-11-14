@@ -84,7 +84,7 @@ Opus 5.5 │ ▰▰▰▰▰▰▰▱▱▱ 140k/200k │ ❄ 快取已過期
 - `❄ 快取已過期（換了模型）` 在 `/model` 換模型後出現，因為新模型還沒有這段對話的快取。
 - `❄ 快取已過期` 只在快取過期後出現。這是唯一能在你**送出訊息之前**就看到的警告，也正是它還派得上用場的時候。
 
-執行一次 `/context-nudge:setup-statusline` 就能裝好。之後會跟著 plugin 一起更新，也和提醒共用同一組[設定](#設定)。status line 會顯示在終端機版的 Claude Code 裡。
+執行一次 `/context-nudge:setup-statusline` 就能裝好。之後會跟著 plugin 一起更新，也和提醒共用同一組[設定](#設定)。status line 會顯示在終端機版的 Claude Code 裡。還沒設定的話，plugin 會在終端機開新 session 時提醒你一次。
 
 進度條以 `remind_always`（預設 200k）為滿格，不是模型的 context 上限。就算上限是 1M tokens，每一輪還是會重送整段 context，所以花費跟著 context 大小增加。
 
