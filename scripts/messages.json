@@ -15,7 +15,8 @@
     "idle": "⏳ {away} since the last turn, so the prompt cache has expired. This turn re-writes {k}k tokens of context{detail}. If this question is unrelated, /clear first next time.",
     "cache_cold": "cache cold",
     "detail_tokens": " (the last turn processed {round} tokens in total: every tool call re-reads the whole context)",
-    "idle_detail_tokens": ", without the cache discount"
+    "idle_detail_tokens": ", without the cache discount",
+    "cache_left": "cache {t}"
   },
   "zh-TW": {
     "what_commit": "剛 commit 完",
@@ -32,7 +33,8 @@
     "idle": "⏳ 距離上一輪已經 {away}，快取過期了。這次會把 {k}k tokens 的 context 重新寫入快取{detail}。如果這個問題跟前面無關，下次先 /clear 再問。",
     "cache_cold": "快取已過期",
     "detail_tokens": "（剛才這一輪總共處理了 {round} tokens，因為每次呼叫工具都會重讀整段 context）",
-    "idle_detail_tokens": "，這次沒有快取折扣"
+    "idle_detail_tokens": "，這次沒有快取折扣",
+    "cache_left": "快取 {t}"
   },
   "zh-CN": {
     "what_commit": "刚 commit 完",
@@ -49,7 +51,8 @@
     "idle": "⏳ 距离上一轮已经 {away}，缓存过期了。这次会把 {k}k tokens 的上下文重新写入缓存{detail}。如果这个问题和前面无关，下次先 /clear 再问。",
     "cache_cold": "缓存已过期",
     "detail_tokens": "（刚才这一轮总共处理了 {round} tokens，因为每次调用工具都会重新读取整段上下文）",
-    "idle_detail_tokens": "，这次没有缓存折扣"
+    "idle_detail_tokens": "，这次没有缓存折扣",
+    "cache_left": "缓存 {t}"
   },
   "ja": {
     "what_commit": "コミットが完了しました",
@@ -66,7 +69,8 @@
     "idle": "⏳ 前回のターンから {away}経ったため、プロンプトキャッシュの有効期限が切れています。このターンでは {k}k トークンのコンテキストがキャッシュに再書き込みされます{detail}。前の会話と無関係な質問なら、次回は先に /clear してください。",
     "cache_cold": "キャッシュ切れ",
     "detail_tokens": "（直前のターンで合計 {round} トークンを処理しました。ツールを呼び出すたびにコンテキスト全体を読み直すためです）",
-    "idle_detail_tokens": "（キャッシュ割引なし）"
+    "idle_detail_tokens": "（キャッシュ割引なし）",
+    "cache_left": "キャッシュ {t}"
   },
   "ko": {
     "what_commit": "커밋을 마쳤습니다",
@@ -83,6 +87,7 @@
     "idle": "⏳ 마지막 턴 이후 {away}이 지나 프롬프트 캐시가 만료되었습니다. 이번 턴에서 {k}k 토큰의 컨텍스트가 캐시에 다시 기록됩니다{detail}. 앞의 대화와 관련 없는 질문이라면 다음에는 먼저 /clear 하세요.",
     "cache_cold": "캐시 만료",
     "detail_tokens": " (직전 턴에서 총 {round} 토큰을 처리했습니다. 도구를 호출할 때마다 컨텍스트 전체를 다시 읽기 때문입니다)",
-    "idle_detail_tokens": " (캐시 할인 없음)"
+    "idle_detail_tokens": " (캐시 할인 없음)",
+    "cache_left": "캐시 {t}"
   }
 }

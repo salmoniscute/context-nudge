@@ -73,10 +73,13 @@ What the commands do:
 ## Status line
 
 ```
-ctx 140k · ❄ cache cold
+Opus 5.5 │ ▰▰▰▰▰▰▰▱▱▱ 140k/200k │ ⏱ cache 52m
+Opus 5.5 │ ▰▰▰▰▰▰▰▱▱▱ 140k/200k │ ❄ cache cold
 ```
 
-- `ctx 140k` is the current context size: green below 100k, yellow from 100k, red from 200k.
+- `▰▰▰▰▰▰▰▱▱▱ 140k/200k` is the current context size, filling toward the `remind_always` threshold: green below 100k, yellow from 100k, red from 200k.
+- `⏱ cache 52m` is how long until the prompt cache expires.
+- With `unit: usd`, the session cost is added at the end.
 - `❄ cache cold` appears once the prompt cache has expired. It's the only warning you can see *before* you send a message, which is when it's still useful.
 
 Run `/context-nudge:setup-statusline` once to set it up, and again after updating the plugin. The status line shows in Claude Code in the terminal.
@@ -163,18 +166,6 @@ That's one person's history. Run `/context-nudge:report` to see yours.
 - **`unit: usd` uses API list prices** from [`scripts/prices.json`](scripts/prices.json) (updated 2026-11-03). Models not in the table are shown in tokens.
 - **Subagents** run in their own transcripts and aren't counted.
 - **The numbers can trail by one response.** Claude Code writes the transcript asynchronously, so the very last response of a turn is sometimes missing when the plugin reads it.
-
-## Contributing
-
-**Add a language.** All text is in [`scripts/messages.json`](scripts/messages.json). Copy the `en` block, translate it, keep the `{placeholders}` exactly as they are, and add the locale mapping to `cn_lang` in [`scripts/lib.sh`](scripts/lib.sh) and `lang_code` in [`scripts/report.py`](scripts/report.py). Missing keys fall back to English. Native speakers reviewing the existing translations are very welcome too.
-
-**Develop.**
-
-```bash
-bash tests/run.sh                         # tests (needs jq; python3 for the report tests)
-claude plugin validate .                  # check the manifest
-claude --plugin-dir .                     # try your working copy without installing
-```
 
 ## License
 

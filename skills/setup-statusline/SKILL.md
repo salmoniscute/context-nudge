@@ -21,10 +21,10 @@ Plugins cannot set the status line themselves, so this copies the script to a st
    chmod +x ~/.claude/context-nudge/statusline.sh
    ```
 
-   The copied status line doesn't receive the plugin's `/config` options, so write the ones it uses to `~/.claude/context-nudge/config.json`. For `language`, use the language the user is writing to you in (`en`, `zh-TW`, `zh-CN`, `ja`, `ko`; anything else is `en`) unless they ask for another one. Keep the thresholds at the defaults unless they changed them in `/config`:
+   The copied status line doesn't receive the plugin's `/config` options, so write the ones it uses to `~/.claude/context-nudge/config.json`. For `language`, use the language the user is writing to you in (`en`, `zh-TW`, `zh-CN`, `ja`, `ko`; anything else is `en`) unless they ask for another one. For `unit`, use `tokens` (Pro/Max plans) unless they changed it in `/config` or ask to see cost, then use `usd` (pay-as-you-go API users). Keep the thresholds at the defaults unless they changed them in `/config`:
 
    ```json
-   { "language": "zh-TW", "remind_at_breakpoint": 100000, "remind_always": 200000 }
+   { "language": "zh-TW", "unit": "tokens", "remind_at_breakpoint": 100000, "remind_always": 200000 }
    ```
 
    If that file already exists, keep its values and only fill in missing keys.
@@ -47,4 +47,4 @@ Plugins cannot set the status line themselves, so this copies the script to a st
 
    If you do not know the transcript path, skip this step.
 
-5. Tell the user, in their language, that it shows `ctx <tokens> · <cost> · ❄ <cache expired>` (the last part only after the cache expires), that the color turns yellow at 100k and red at 200k, that the status line language is set in `~/.claude/context-nudge/config.json`, and that after a plugin update they should run this command again to pick up new prices and translations.
+5. Tell the user, in their language, that it shows `<model> │ <bar> <tokens>/<threshold> │ ⏱ <cache time left> │ <cost>` (the bar fills toward the `remind_always` threshold, the cache part turns into `❄ <cache expired>` once the cache expires, the cost only when `unit` is `usd`), that the color turns yellow at 100k and red at 200k, that the status line language and unit are set in `~/.claude/context-nudge/config.json`, and that after a plugin update they should run this command again to pick up new prices and translations.

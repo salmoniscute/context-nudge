@@ -1,12 +1,13 @@
 #!/bin/bash
-# Status line: context size, session cost, and whether the cache has gone cold.
-#   ctx 87k · $3.42
-#   ctx 87k · $3.42 · ❄ cache cold
+# Status line: model, context size against the hard threshold, cache time left, cost.
+#   Opus 5.5 │ ▰▰▰▰▱▱▱▱▱▱ 87k/200k │ ⏱ cache 52m
+#   Opus 5.5 │ ▰▰▰▰▱▱▱▱▱▱ 87k/200k │ ❄ cache cold │ $3.42
 source "$(dirname "$0")/lib.sh"
 if ! cn_have_jq; then echo "context-nudge: install jq"; exit 0; fi
 
 input=$(cat)
 transcript=$(jq -r '.transcript_path // empty' <<<"$input")
+model=$(jq -r '.model.display_name // empty' <<<"$input")
 [ -f "$transcript" ] || { echo "ctx –"; exit 0; }
 
 # The status line redraws often; re-analyse only when the transcript grows.
@@ -30,10 +31,34 @@ cost=$(jq -r '.session_cost_s // empty' <<<"$a")
 if   [ "$ctx" -ge "$HARD" ]; then color='\033[31m'
 elif [ "$ctx" -ge "$SOFT" ]; then color='\033[33m'
 else color='\033[32m'; fi
+dim='\033[2m'
 reset='\033[0m'
+sep=" ${dim}│${reset} "
 
-out="${color}ctx $(( ctx / 1000 ))k${reset}"
-[ -n "$cost" ] && [ "$(cn_opt UNIT tokens)" = usd ] && out="$out · $cost"
+# 10-cell bar filled toward the hard threshold, at least one cell once there is any context.
+cells=10
+filled=$(( ctx * cells / HARD ))
+[ "$filled" -gt "$cells" ] && filled=$cells
+[ "$filled" -eq 0 ] && [ "$ctx" -gt 0 ] && filled=1
+bar=""
+for ((i = 0; i < cells; i++)); do
+  if [ "$i" -lt "$filled" ]; then bar="${bar}▰"; else bar="${bar}▱"; fi
+done
+
+out=""
+[ -n "$model" ] && out="${model}${sep}"
+out="${out}${color}${bar} $(( ctx / 1000 ))k${reset}${dim}/$(( HARD / 1000 ))k${reset}"
+
 now=${CONTEXT_NUDGE_NOW:-$(date +%s)}
-[ "$last" -gt 0 ] && [ $(( now - last )) -gt "$ttl" ] && out="$out · ❄ $(cn_msg cache_cold)"
+if [ "$last" -gt 0 ]; then
+  left=$(( last + ttl - now ))
+  if [ "$left" -le 0 ]; then
+    out="${out}${sep}❄ $(cn_msg cache_cold)"
+  else
+    if [ "$left" -lt 60 ]; then t="<1m"; else t="$(( left / 60 ))m"; fi
+    out="${out}${sep}${dim}⏱ $(cn_msg cache_left t="$t")${reset}"
+  fi
+fi
+
+[ -n "$cost" ] && [ "$(cn_opt UNIT tokens)" = usd ] && out="${out}${sep}${cost}"
 printf '%b\n' "$out"

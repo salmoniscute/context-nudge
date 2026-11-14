@@ -197,13 +197,18 @@ echo "status line"
 new sl
 prompt 2026-11-13T10:00:00.000Z "x"
 asst m1 claude-opus-5-5 2026-11-13T10:00:05.000Z 0 87000 0 0 500
-sl=$(jq -nc --arg t "$T" '{transcript_path:$t}' | CONTEXT_NUDGE_NOW=$((t0 + 60)) "$S/statusline.sh")
-has "shows context" "$sl" "ctx 87k"
+sl=$(jq -nc --arg t "$T" '{transcript_path:$t,model:{display_name:"Opus 5.5"}}' | CONTEXT_NUDGE_NOW=$((t0 + 60)) "$S/statusline.sh")
+has "shows context" "$sl" "87k"
+has "shows hard threshold" "$sl" "/150k"
+has "shows model name" "$sl" "Opus 5.5"
+has "bar fills toward hard threshold" "$sl" "▰▰▰▰▰▱▱▱▱▱"
+has "shows cache time left" "$sl" "cache 4m"
 case "$sl" in *'$'*) bad "tokens mode: no cost" "$sl" ;; *) ok "tokens mode: no cost" ;; esac
 sl=$(jq -nc --arg t "$T" '{transcript_path:$t}' | CONTEXT_NUDGE_UNIT=usd CONTEXT_NUDGE_NOW=$((t0 + 60)) "$S/statusline.sh")
 has "usd mode: shows cost" "$sl" '$0.03'
 sl=$(jq -nc --arg t "$T" '{transcript_path:$t}' | CONTEXT_NUDGE_NOW=$((t0 + 4000)) "$S/statusline.sh")
 has "shows cold cache" "$sl" "cache cold"
+case "$sl" in *⏱*) bad "cold cache: no countdown" "$sl" ;; *) ok "cold cache: no countdown" ;; esac
 sl=$(jq -nc --arg t "$T" '{transcript_path:$t}' | CONTEXT_NUDGE_LANGUAGE=ja CONTEXT_NUDGE_NOW=$((t0 + 4000)) "$S/statusline.sh")
 has "cold cache is translated" "$sl" "キャッシュ切れ"
 # The copied status line reads its language from config.json next to it.
