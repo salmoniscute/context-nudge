@@ -84,7 +84,9 @@ Opus 5.5 │ ▰▰▰▰▰▰▰▱▱▱ 140k/200k │ ❄ 快取已過期
 - `❄ 快取已過期（換了模型）` 在 `/model` 換模型後出現，因為新模型還沒有這段對話的快取。
 - `❄ 快取已過期` 只在快取過期後出現。這是唯一能在你**送出訊息之前**就看到的警告，也正是它還派得上用場的時候。
 
-執行一次 `/context-nudge:setup-statusline` 就能裝好；更新 plugin 之後要再執行一次。status line 會顯示在終端機版的 Claude Code 裡。
+執行一次 `/context-nudge:setup-statusline` 就能裝好。之後會跟著 plugin 一起更新，也和提醒共用同一組[設定](#設定)。status line 會顯示在終端機版的 Claude Code 裡。
+
+進度條以 `remind_always`（預設 200k）為滿格，不是模型的 context 上限。就算上限是 1M tokens，每一輪還是會重送整段 context，所以花費跟著 context 大小增加。
 
 ## 設定
 
@@ -124,7 +126,7 @@ claude plugin marketplace update context-nudge
 claude plugin update context-nudge@context-nudge
 ```
 
-更新後重新啟動 Claude Code。有用 status line 的話，再執行一次 `/context-nudge:setup-statusline`，取得新的價格表和翻譯。
+更新後重新啟動 Claude Code。status line 會在你送出下一則訊息後換成新版本。如果你的 status line 是在這個版本之前裝的，請再執行一次 `/context-nudge:setup-statusline`，之後就會自動保持最新。
 
 移除：
 
@@ -142,7 +144,7 @@ claude plugin uninstall context-nudge@context-nudge
 
 **從來沒看過提醒。** 如果你的 session 都在 100k tokens 以內，這是正常的。想確認有沒有在運作，可以暫時把 `remind_always` 設成 `1000`（見[設定](#設定)），重新啟動 Claude Code 後隨便問一個問題，回覆完應該就會看到提醒。確認完記得改回 `200000`。如果還是沒出現，請確認 `jq --version` 能正常執行，以及 `claude plugin list` 顯示 plugin 已啟用。
 
-**提醒的語言不對。** 直接設定 `language`（見[設定](#設定)），然後重新啟動 Claude Code。status line 的語言要另外到 `~/.claude/context-nudge/config.json` 修改 `language`。
+**提醒的語言不對。** 直接設定 `language`（見[設定](#設定)），然後重新啟動 Claude Code。status line 也會使用同一個設定。
 
 **報告說它用的是預設門檻。** 剛裝好時這是正常的。只要 Claude 回覆過一次，plugin 就會記下你的設定，之後的報告就會用你的設定。
 

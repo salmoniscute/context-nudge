@@ -8,13 +8,23 @@ cn_have_jq() { command -v jq >/dev/null 2>&1; }
 # Option lookup, first match wins:
 #   CLAUDE_PLUGIN_OPTION_<KEY>  set by Claude Code for hooks, from /config
 #   CONTEXT_NUDGE_<KEY>         env override (tests, power users)
-#   config.json next to the scripts  written by setup-statusline, since the
-#                               copied status line gets no plugin env
+#   CONTEXT_NUDGE_CONFIG        colon-separated JSON files, first match wins.
+#                               The status line launcher sets it: the status
+#                               line gets no plugin env, so it reads the user's
+#                               config.json and the /config values the hooks saved.
+#   config.json next to the scripts  older status line installs copied the
+#                               scripts and wrote this file next to them
 cn_opt() {
-  local key="$1" def="$2" v
+  local key="$1" def="$2" v f k
   v=$(eval "printf '%s' \"\${CLAUDE_PLUGIN_OPTION_${key}:-\${CONTEXT_NUDGE_${key}:-}}\"")
-  if [ -z "$v" ] && [ -f "$CN_DIR/config.json" ]; then
-    v=$(jq -r --arg k "$(printf '%s' "$key" | tr 'A-Z' 'a-z')" '.[$k] // empty' "$CN_DIR/config.json" 2>/dev/null)
+  if [ -z "$v" ]; then
+    k=$(printf '%s' "$key" | tr 'A-Z' 'a-z')
+    local IFS=:
+    for f in ${CONTEXT_NUDGE_CONFIG:-} "$CN_DIR/config.json"; do
+      [ -f "$f" ] || continue
+      v=$(jq -r --arg k "$k" '.[$k] // empty' "$f" 2>/dev/null)
+      [ -n "$v" ] && break
+    done
   fi
   printf '%s' "${v:-$def}"
 }
@@ -98,6 +108,20 @@ cn_save_effective() {
     '{language: $language, unit: $unit, remind_at_breakpoint: $soft, remind_always: $hard,
       remind_step: $step, idle_min_tokens: $idle, updated: now | floor}' >"$f.tmp" 2>/dev/null \
     && mv "$f.tmp" "$f"
+}
+
+# Where the status line launcher lives (setup-statusline puts it here).
+cn_home() { printf '%s' "${CONTEXT_NUDGE_HOME:-$HOME/.claude/context-nudge}"; }
+
+# Tell the status line launcher where this plugin version and its data live.
+# Only once the status line is set up, and only rewritten when it changes.
+cn_save_pointer() {
+  [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] || return 0
+  local h f m; h=$(cn_home); f="$h/plugin.json"
+  [ -d "$h" ] || return 0
+  m=$(jq -nc --arg r "$CLAUDE_PLUGIN_ROOT" --arg d "$(cn_data_dir)" '{root: $r, data: $d}')
+  [ "$(cat "$f" 2>/dev/null)" = "$m" ] && return 0
+  printf '%s\n' "$m" >"$f.tmp" 2>/dev/null && mv "$f.tmp" "$f"
 }
 
 # Print the analysis JSON for a transcript, or nothing on failure.

@@ -84,7 +84,9 @@ Opus 5.5 │ ▰▰▰▰▰▰▰▱▱▱ 140k/200k │ ❄ cache cold
 - `❄ cache cold (model switched)` appears right after `/model`, because the new model has no cache of this conversation yet.
 - `❄ cache cold` appears once the prompt cache has expired. It's the only warning you can see *before* you send a message, which is when it's still useful.
 
-Run `/context-nudge:setup-statusline` once to set it up, and again after updating the plugin. The status line shows in Claude Code in the terminal.
+Run `/context-nudge:setup-statusline` once to set it up. It updates together with the plugin and uses the same [settings](#settings) as the reminders. The status line shows in Claude Code in the terminal.
+
+The bar fills toward `remind_always` (200k by default), not toward the model's context window. Even with a 1M-token window, every turn re-sends the whole context, so the cost grows with its size.
 
 ## Settings
 
@@ -124,7 +126,7 @@ claude plugin marketplace update context-nudge
 claude plugin update context-nudge@context-nudge
 ```
 
-Then restart Claude Code. If you use the status line, run `/context-nudge:setup-statusline` again to pick up new prices and translations.
+Then restart Claude Code. The status line picks up the new version after your next message. If you set up the status line before this version, run `/context-nudge:setup-statusline` once more so it stays current from then on.
 
 Uninstall:
 
@@ -142,7 +144,7 @@ If you installed the status line, also remove the `statusLine` entry from `~/.cl
 
 **I never see a reminder.** That's expected while your sessions stay under 100k tokens. To check it's working, temporarily set `remind_always` to `1000` (see [Settings](#settings)), restart Claude Code, ask anything, and you should see a reminder after the reply. Then set it back to `200000`. If nothing appears, check that `jq --version` works and that `claude plugin list` shows the plugin as enabled.
 
-**Reminders are in the wrong language.** Set `language` explicitly (see [Settings](#settings)) and restart Claude Code. For the status line, change `language` in `~/.claude/context-nudge/config.json`.
+**Reminders are in the wrong language.** Set `language` explicitly (see [Settings](#settings)) and restart Claude Code. The status line uses the same setting.
 
 **The report says it used the default thresholds.** That's normal right after installing. Once the plugin has sent a reminder check (after any reply), the report uses your settings.
 

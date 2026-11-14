@@ -10,24 +10,19 @@ Plugins cannot set the status line themselves, so this copies the script to a st
 
 1. Check that `jq` is installed (`command -v jq`). If it is missing, tell the user to install it (`brew install jq`, `apt install jq`) and stop.
 
-2. Copy the scripts to a stable location. The plugin's own folder changes on every update, so do not point settings at it:
+2. Install the launcher. It is a small script that runs the status line of whichever plugin version is installed, so plugin updates and `/config` changes apply without running this again. The plugin's own folder changes on every update, so settings must point at the launcher, not at the plugin:
 
    ```bash
    mkdir -p ~/.claude/context-nudge
-   cp "${CLAUDE_PLUGIN_ROOT}/scripts/statusline.sh" "${CLAUDE_PLUGIN_ROOT}/scripts/lib.sh" \
-      "${CLAUDE_PLUGIN_ROOT}/scripts/analyze.jq" "${CLAUDE_PLUGIN_ROOT}/scripts/prices.json" \
-      "${CLAUDE_PLUGIN_ROOT}/scripts/messages.json" \
-      ~/.claude/context-nudge/
+   cp "${CLAUDE_PLUGIN_ROOT}/scripts/statusline-launcher.sh" ~/.claude/context-nudge/statusline.sh
    chmod +x ~/.claude/context-nudge/statusline.sh
+   jq -nc --arg r "${CLAUDE_PLUGIN_ROOT}" --arg d "${CLAUDE_PLUGIN_DATA}" '{root: $r, data: $d}' \
+     > ~/.claude/context-nudge/plugin.json
    ```
 
-   The copied status line doesn't receive the plugin's `/config` options, so write the ones it uses to `~/.claude/context-nudge/config.json`. For `language`, use the language the user is writing to you in (`en`, `zh-TW`, `zh-CN`, `ja`, `ko`; anything else is `en`) unless they ask for another one. For `unit`, use `tokens` (Pro/Max plans) unless they changed it in `/config` or ask to see cost, then use `usd` (pay-as-you-go API users). Keep the thresholds at the defaults unless they changed them in `/config`:
+   The hooks keep `plugin.json` current from then on. The status line uses the same `/config` options as the reminders.
 
-   ```json
-   { "language": "zh-TW", "unit": "tokens", "remind_at_breakpoint": 100000, "remind_always": 200000 }
-   ```
-
-   If that file already exists, keep its values and only fill in missing keys.
+   Older versions of this command copied all the scripts and wrote `config.json`. If `~/.claude/context-nudge/` still has `lib.sh`, `analyze.jq`, `prices.json` or `messages.json`, delete them. If it has `config.json`, show the user its contents and ask whether to keep it: it overrides `/config` for the status line only. If they don't need that, delete it.
 
 3. Read `~/.claude/settings.json` (it may not exist).
    - No `statusLine` key, or it already points at `~/.claude/context-nudge/statusline.sh`: set it as below.
@@ -42,9 +37,9 @@ Plugins cannot set the status line themselves, so this copies the script to a st
 4. Run it once against the current session to show the user what it looks like:
 
    ```bash
-   echo '{"transcript_path":"<this session transcript>"}' | ~/.claude/context-nudge/statusline.sh
+   echo '{"transcript_path":"<this session transcript>","model":{"display_name":"<current model>"}}' | ~/.claude/context-nudge/statusline.sh
    ```
 
    If you do not know the transcript path, skip this step.
 
-5. Tell the user, in their language, that it shows `<model> │ <bar> <tokens>/<threshold> │ ⏱ <cache time left> │ <cost>` (the bar fills toward the `remind_always` threshold, the cache part turns into `❄ <cache expired>` once the cache expires, the cost only when `unit` is `usd`), that the color turns yellow at 100k and red at 200k, that the status line language and unit are set in `~/.claude/context-nudge/config.json`, and that after a plugin update they should run this command again to pick up new prices and translations.
+5. Tell the user, in their language, that it shows `<model> │ <bar> <tokens>/<threshold> │ ⏱ <cache time left> │ <cost>` (the bar fills toward the `remind_always` threshold, the cache part turns into `❄ <cache expired>` once the cache expires or right after switching model, the cost only when `unit` is `usd`), that the color turns yellow at 100k and red at 200k, and that it follows the plugin's `/config` options and updates together with the plugin, so there is no need to run this command again.

@@ -10,6 +10,7 @@ transcript=$(jq -r '.transcript_path // empty' <<<"$input")
 session=$(jq -r '.session_id // "unknown"' <<<"$input" | tr -cd 'A-Za-z0-9_-')
 
 cn_save_effective
+cn_save_pointer
 a=$(cn_analyze "$transcript") || exit 0
 [ "$(jq -r '.ok' <<<"$a")" = true ] || exit 0
 

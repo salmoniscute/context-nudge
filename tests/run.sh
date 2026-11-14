@@ -7,6 +7,9 @@ S="$ROOT/scripts"
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 export CLAUDE_PLUGIN_DATA="$WORK/data" TMPDIR="$WORK/tmp"
+# Never touch the real ~/.claude/context-nudge, even if run from inside a hook.
+export CONTEXT_NUDGE_HOME="$WORK/home-none"
+unset CONTEXT_NUDGE_CONFIG
 mkdir -p "$TMPDIR"
 pass=0; fail=0
 
@@ -232,6 +235,33 @@ sl=$(jq -nc --arg t "$T" '{transcript_path:$t}' | CONTEXT_NUDGE_REMIND_ALWAYS=0 
 has "remind_always 0: shows context" "$sl" "87k"
 case "$sl" in *rror*|*/0k*|*▱*) bad "remind_always 0: no bar, no error" "$sl" ;; *) ok "remind_always 0: no bar, no error" ;; esac
 has "missing transcript" "$(echo '{}' | "$S/statusline.sh")" "ctx –"
+
+echo "status line launcher"
+new launch
+prompt 2026-11-13T10:00:00.000Z "x"
+asst m1 claude-opus-5-5 2026-11-13T10:00:05.000Z 0 87000 0 0 500
+H="$WORK/home"; mkdir -p "$H"
+cp "$S/statusline-launcher.sh" "$H/statusline.sh"
+lsl() { jq -nc --arg t "$T" '{transcript_path:$t}' | env -u CONTEXT_NUDGE_LANGUAGE CONTEXT_NUDGE_NOW=$((t0 + 4000)) "$H/statusline.sh"; }
+has "no pointer yet: says to send a message" "$(lsl)" "send a message"
+# A hook run records where the plugin and its /config values live.
+jq -nc --arg t "$T" '{session_id:"ln",transcript_path:$t}' \
+  | CONTEXT_NUDGE_HOME="$H" CLAUDE_PLUGIN_ROOT="$ROOT" CLAUDE_PLUGIN_OPTION_LANGUAGE=ja "$S/on-stop.sh" >/dev/null
+has "hook writes pointer" "$(jq -r .root "$H/plugin.json")" "$ROOT"
+has "launcher runs the plugin's status line" "$(lsl)" "87k"
+has "launcher follows /config values" "$(lsl)" "キャッシュ切れ"
+echo '{"language":"ko"}' >"$H/config.json"
+has "config.json overrides /config" "$(lsl)" "캐시 만료"
+rm "$H/config.json"
+jq -nc --arg t "$T" '{session_id:"ln",transcript_path:$t,prompt:"x"}' \
+  | CONTEXT_NUDGE_HOME="$H" CLAUDE_PLUGIN_ROOT="$ROOT" "$S/on-prompt.sh" >/dev/null
+has "prompt hook keeps pointer" "$(jq -r .root "$H/plugin.json")" "$ROOT"
+jq -nc --arg r "$WORK/gone" '{root:$r}' >"$H/plugin.json"
+has "stale pointer: says to send a message" "$(lsl)" "send a message"
+rm -rf "$WORK/nohome"
+jq -nc --arg t "$T" '{session_id:"ln",transcript_path:$t}' \
+  | CONTEXT_NUDGE_HOME="$WORK/nohome" CLAUDE_PLUGIN_ROOT="$ROOT" "$S/on-stop.sh" >/dev/null
+[ -e "$WORK/nohome" ] && bad "no status line: hook creates nothing" "$(ls "$WORK/nohome")" || ok "no status line: hook creates nothing"
 
 echo "model switch"
 new sw

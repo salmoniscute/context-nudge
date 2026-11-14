@@ -6,6 +6,7 @@ source "$(dirname "$0")/lib.sh"
 cn_have_jq || exit 0
 
 input=$(cat)
+cn_save_pointer
 transcript=$(jq -r '.transcript_path // empty' <<<"$input")
 a=$(cn_analyze "$transcript") || exit 0
 [ "$(jq -r '.ok' <<<"$a")" = true ] || exit 0
