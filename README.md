@@ -14,6 +14,7 @@ Works with Pro and Max plans and with pay-as-you-go API keys. Reminders in Engli
 
 You need:
 
+- **macOS or Linux.** The plugin runs bash scripts. On Windows, use Claude Code inside WSL.
 - **Claude Code in the terminal** (the `claude` command). You use it to install the plugin. Plugins can't be installed from the VS Code panel: `/plugin` there says it isn't available. Run the install commands below in a terminal instead.
 - **`jq`**, which the reminders use. macOS 15 and later include it. Otherwise: `brew install jq` (macOS) or `sudo apt install jq` (Debian/Ubuntu). Check with `jq --version`.
 - **`python3`** (optional), only for `/context-nudge:report`. Check with `python3 --version`.
@@ -133,6 +134,12 @@ claude plugin uninstall context-nudge@context-nudge
 
 If you installed the status line, also remove the `statusLine` entry from `~/.claude/settings.json` and delete the `~/.claude/context-nudge` folder.
 
+To remove the plugin's local data too (see [Privacy and accuracy](#privacy-and-accuracy)):
+
+```bash
+rm -rf ~/.claude/plugins/data/context-nudge-context-nudge "${TMPDIR:-/tmp}/context-nudge-shared"
+```
+
 ## Troubleshooting
 
 **`/plugin isn't available in this environment`.** You're in the VS Code panel. Install from a terminal with the `claude plugin …` commands above.
@@ -163,6 +170,7 @@ That's one person's history. Run `/context-nudge:report` to see yours.
 ## Privacy and accuracy
 
 - **Everything runs on your machine.** The plugin reads the transcripts Claude Code already saves locally. Nothing is sent anywhere.
+- **What it saves locally:** in `~/.claude/plugins/data/context-nudge-context-nudge/`, a log of reminders shown and `/clear`s (`events.jsonl`, with the project folder of each session, capped at about 1 MB), per-session reminder state, and the settings the hooks last used. In your temp folder, `context-nudge-shared/`. If you set up the status line, `~/.claude/context-nudge/`.
 - **How Pro/Max limits count tokens isn't published**, so the plugin doesn't show "% of your limit". It shows tokens. Cached reads are much cheaper than other tokens on the API and probably count for less against limits too, so a big "processed" number overstates the impact somewhat. Re-writes after the cache expires are the expensive part.
 - **`unit: usd` uses API list prices** from [`scripts/prices.json`](scripts/prices.json) (updated 2026-11-03). Models not in the table are shown in tokens. If only some responses used such a model, the cost is shown as a lower bound (`≥$3.42`).
 - **Subagents** run in their own transcripts and aren't counted.

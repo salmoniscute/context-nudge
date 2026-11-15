@@ -14,6 +14,7 @@ session 越長，每一輪就越耗用量，因為 Claude 每次呼叫工具都�
 
 你需要：
 
+- **macOS 或 Linux。** plugin 用的是 bash 腳本。Windows 請在 WSL 裡使用 Claude Code。
 - **終端機版的 Claude Code**（`claude` 指令）。安裝 plugin 要用到它。VS Code 面板裡不能安裝 plugin，在那裡輸入 `/plugin` 會顯示無法使用，請改在終端機執行下面的安裝指令。
 - **`jq`**，提醒功能會用到。macOS 15 以上內建；其他系統請執行 `brew install jq`（macOS）或 `sudo apt install jq`（Debian/Ubuntu）。可以用 `jq --version` 確認有沒有裝好。
 - **`python3`**（選用），只有 `/context-nudge:report` 會用到。可以用 `python3 --version` 確認。
@@ -133,6 +134,12 @@ claude plugin uninstall context-nudge@context-nudge
 
 如果有裝 status line，也要從 `~/.claude/settings.json` 刪掉 `statusLine` 那一項，並刪除 `~/.claude/context-nudge` 資料夾。
 
+如果也要刪掉 plugin 存在本機的資料（見[隱私與準確度](#隱私與準確度)）：
+
+```bash
+rm -rf ~/.claude/plugins/data/context-nudge-context-nudge "${TMPDIR:-/tmp}/context-nudge-shared"
+```
+
 ## 疑難排解
 
 **出現 `/plugin isn't available in this environment`。** 你是在 VS Code 面板裡輸入的。請改在終端機用上面的 `claude plugin …` 指令安裝。
@@ -163,6 +170,7 @@ claude plugin uninstall context-nudge@context-nudge
 ## 隱私與準確度
 
 - **全部在你的電腦上執行。** plugin 讀的是 Claude Code 原本就存在本機的對話紀錄，不會傳送任何資料。
+- **會在本機存下的東西：** `~/.claude/plugins/data/context-nudge-context-nudge/` 裡有提醒和 `/clear` 的紀錄（`events.jsonl`，含每個 session 的專案資料夾，上限約 1 MB）、每個 session 的提醒狀態，以及 hook 最近一次用的設定。暫存資料夾裡有 `context-nudge-shared/`。如果裝了 status line，還有 `~/.claude/context-nudge/`。
 - **Pro/Max 額度怎麼計算 token 沒有公開**，所以 plugin 不會顯示「用掉額度的 %」，只顯示 token 數。快取讀取在 API 上比其他 token 便宜很多，對額度的消耗很可能也比較少，所以「處理了多少」這個數字看起來會比實際影響大一些。真正貴的是快取過期後的重新寫入。
 - **`unit: usd` 用的是 API 牌價**，放在 [`scripts/prices.json`](scripts/prices.json)（2026-11-03 更新）。不在價格表裡的模型會改用 token 顯示。如果只有部分回應用了這種模型，金額會顯示成下限（`≥$3.42`）。
 - **Subagent** 有自己的對話紀錄，不算在內。

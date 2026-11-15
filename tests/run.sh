@@ -96,9 +96,9 @@ has "after /compact, counting restarts" "$(stop s-long)" "160k"
 new defaults
 prompt 2026-11-13T10:00:00.000Z "x"
 asst m1 claude-opus-5-5 2026-11-13T10:00:05.000Z 0 160000 0 0 500
-none "default: 160k mid-task is quiet" "$(CONTEXT_NUDGE_REMIND_ALWAYS= stop s-def)"
+none "default: 160k mid-task is quiet" "$(CONTEXT_NUDGE_REMIND_ALWAYS='' stop s-def)"
 asst m2 claude-opus-5-5 2026-11-13T10:01:00.000Z 0 210000 0 0 500
-has "default: 210k reminds" "$(CONTEXT_NUDGE_REMIND_ALWAYS= stop s-def)" "210k"
+has "default: 210k reminds" "$(CONTEXT_NUDGE_REMIND_ALWAYS='' stop s-def)" "210k"
 
 new small
 prompt 2026-11-13T10:00:00.000Z "x"
@@ -180,7 +180,7 @@ has "auto: zh_HK -> Traditional"   "$(CONTEXT_NUDGE_LANGUAGE=auto LANG=zh_HK.UTF
 has "auto: zh_CN -> Simplified"    "$(CONTEXT_NUDGE_LANGUAGE=auto LANG=zh_CN.UTF-8 stop l7)" "上下文已到"
 has "auto: ja_JP -> Japanese"      "$(CONTEXT_NUDGE_LANGUAGE=auto LANG=ja_JP.UTF-8 stop l8)" "トークン"
 has "auto: fr_FR -> English"       "$(CONTEXT_NUDGE_LANGUAGE=auto LANG=fr_FR.UTF-8 stop l9)" "Context is at"
-has "auto: no LANG -> English"     "$(CONTEXT_NUDGE_LANGUAGE=auto LANG= stop l10)" "Context is at"
+has "auto: no LANG -> English"     "$(CONTEXT_NUDGE_LANGUAGE=auto LANG='' stop l10)" "Context is at"
 has "zh-Hant spelling accepted"    "$(CONTEXT_NUDGE_LANGUAGE=zh-Hant stop l11)" "Context 已到"
 has "unknown setting -> English"   "$(CONTEXT_NUDGE_LANGUAGE=xx stop l12)" "Context is at"
 
@@ -231,7 +231,7 @@ sl=$(jq -nc --arg t "$T" '{transcript_path:$t,model:{id:"claude-opus-5-5[1m]"}}'
 has "same model with suffix: still warm" "$sl" "cache 4m"
 # The copied status line reads its language from config.json next to it.
 cp -R "$S" "$WORK/copy"; echo '{"language":"ko"}' >"$WORK/copy/config.json"
-sl=$(jq -nc --arg t "$T" '{transcript_path:$t}' | CONTEXT_NUDGE_LANGUAGE= CONTEXT_NUDGE_NOW=$((t0 + 4000)) "$WORK/copy/statusline.sh")
+sl=$(jq -nc --arg t "$T" '{transcript_path:$t}' | CONTEXT_NUDGE_LANGUAGE='' CONTEXT_NUDGE_NOW=$((t0 + 4000)) "$WORK/copy/statusline.sh")
 has "copied status line uses config.json" "$sl" "캐시 만료"
 sl=$(jq -nc --arg t "$T" '{transcript_path:$t}' | CONTEXT_NUDGE_REMIND_ALWAYS=0 CONTEXT_NUDGE_NOW=$((t0 + 60)) "$S/statusline.sh" 2>&1)
 has "remind_always 0: shows context" "$sl" "87k"
@@ -364,7 +364,7 @@ hook on-session-start.sh fh /g $((t0 + 7300)) clear
 # An expired-cache reminder is counted but not paired.
 T="$P/i.jsonl"; : >"$T"
 prompt 2026-11-13T10:00:00.000Z "x"; asst i1 claude-opus-5-5 2026-11-13T10:00:05.000Z 0 90000 0 0 500
-hook on-prompt.sh fi /i $((t0 + 4000))
+hook on-prompt.sh 'fi' /i $((t0 + 4000))
 ev=$(cat "$D/events.jsonl")
 has "logs reminders" "$ev" '"ev":"remind","kind":"long","session":"fa","cwd":"/a","ctx":160000'
 has "logs /clear with the new transcript" "$ev" '"ev":"clear","session":"fb"'
@@ -399,7 +399,7 @@ if command -v python3 >/dev/null; then
   R() { HOME="$WORK/home" python3 -I "$S/report.py" --dir "$WORK/projects" --days 0 --settings /nonexistent "$@"; }
   rm -f "$CLAUDE_PLUGIN_DATA/effective.json"
   has "no saved settings -> defaults" "$(R --data "$CLAUDE_PLUGIN_DATA" | jq -r .settings_source)" defaults
-  has "no saved settings -> English without a locale" "$(LANG= R --data "$CLAUDE_PLUGIN_DATA" | jq -r .language)" en
+  has "no saved settings -> English without a locale" "$(LANG='' R --data "$CLAUDE_PLUGIN_DATA" | jq -r .language)" en
   has "locale decides the language" "$(LANG=ja_JP.UTF-8 R --data "$CLAUDE_PLUGIN_DATA" | jq -r .language)" ja
   new eff; prompt 2026-11-13T10:00:00.000Z x; asst m1 claude-opus-5-5 2026-11-13T10:00:05.000Z 0 1000 0 0 1
   CONTEXT_NUDGE_LANGUAGE=ko CONTEXT_NUDGE_REMIND_AT_BREAKPOINT=77000 CONTEXT_NUDGE_UNIT=usd stop s-eff >/dev/null

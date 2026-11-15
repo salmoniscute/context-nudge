@@ -8,7 +8,7 @@
     {
       "name": "context-nudge",
       "source": "./",
-      "description": "Nudges you to /clear at the right moment, with the cost in dollars."
+      "description": "Nudges you to /clear at the right moment: after a commit in a long session, when the context gets very long, and when you come back to an expired cache."
     }
   ]
 }
